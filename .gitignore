@@ -1,0 +1,7 @@
+*.vs
+*.suo
+*.userprefs
+obj/
+bin/
+bower_components/
+node_modules/
