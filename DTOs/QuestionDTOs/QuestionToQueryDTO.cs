@@ -1,6 +1,6 @@
 namespace QuizApi.DTOs
 {
-    public class QuestionToCreate
+    public class QuestionToQueryDTO
     {
         public int Id { get; set; }
 

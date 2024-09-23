@@ -1,11 +1,11 @@
 namespace QuizApi.Repositories
 {
-    public interface IRepository<T, TToQuery, TToCreate, TToUpate> where T : class
+    public interface IRepository<T, QueryDTO, CreateDTO, UpdateDTO> where T : class
     {
-        public Task<IEnumerable<TToQuery>> GetAllAsync();
-        public Task<TToQuery> GetByIdAsync(int id);
-        public Task<TToQuery> CreateAsync(TToCreate entity);
-        public Task UpdateAsync(int id, TToUpate entity);
+        public Task<IEnumerable<QueryDTO>> GetAllAsync();
+        public Task<QueryDTO> GetByIdAsync(int id);
+        public Task<QueryDTO> CreateAsync(CreateDTO entity);
+        public Task UpdateAsync(int id, UpdateDTO entity);
         public Task DeleteAsync(int id);
     }
 }

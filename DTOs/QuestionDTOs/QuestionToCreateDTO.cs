@@ -1,11 +1,9 @@
 namespace QuizApi.DTOs
 {
-    public class QuestionToQuery
+    public class QuestionToCreateDTO
     {
-        public int Id { get; set; }
-
         public string QuestionInWords { get; set; }
-
+        
         public string? ImageName { get; set; }
 
         public string Option1 { get; set; }

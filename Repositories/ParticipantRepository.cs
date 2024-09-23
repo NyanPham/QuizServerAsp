@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.Data;
+using QuizApi.DTOs;
 using QuizApi.Models;
 
 namespace QuizApi.Repositories
 {
-    public class ParticipantRepository : IRepository<Participant>
+    public class ParticipantRepository : IRepository<Participant, ParticipantToQueryDTO, ParticipantToCreateDTO, ParticipantToUpdateDTO>
     {
         private readonly ApplicationDbContext _context;
 
@@ -14,22 +14,47 @@ namespace QuizApi.Repositories
             _context = context;
         }
 
-
-        public async Task<IEnumerable<Participant>> GetAllAsync()
+        public async Task<IEnumerable<ParticipantToQueryDTO>> GetAllAsync()
         {
-            return await _context.Participants.ToListAsync();
+            var participants = await _context.Participants.ToListAsync();
+
+            return participants.Select(p => new ParticipantToQueryDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Email = p.Email,
+                Score = p.Score,
+                TimeTaken = p.TimeTaken,
+                User = p.User
+            });
         }
 
-        public async Task<Participant> CreateAsync(Participant entity)
+        public async Task<ParticipantToQueryDTO> CreateAsync(ParticipantToCreateDTO entity)
         {
-            await _context.Participants.AddAsync(entity);
+            var participant = new Participant
+            {
+                Name = entity.Name,
+                Email = entity.Email,
+                Score = entity.Score,
+                TimeTaken = entity.TimeTaken,
+                UserId = entity.UserId
+            };
+
+            await _context.Participants.AddAsync(participant);
             await _context.SaveChangesAsync();
 
-            return entity;
+            return new ParticipantToQueryDTO {
+                Id = participant.Id,
+                Name = participant.Name,
+                Email = participant.Email,
+                Score = participant.Score,
+                TimeTaken = participant.TimeTaken,
+                User = participant.User
+            };
         }
 
-        public async Task<Participant> GetByIdAsync(int id)
-        {
+        public async Task<ParticipantToQueryDTO> GetByIdAsync(int id)
+        {       
             var participant = await _context.Participants.FindAsync(id);
 
             if (participant == null)
@@ -37,10 +62,18 @@ namespace QuizApi.Repositories
                 throw new KeyNotFoundException();
             }
 
-            return participant;
+            return new ParticipantToQueryDTO
+            {
+                Id = participant.Id,
+                Name = participant.Name,
+                Email = participant.Email,
+                Score = participant.Score,
+                TimeTaken = participant.TimeTaken,
+                User = participant.User
+            };
         }
 
-        public async Task UpdateAsync(int id, Participant entity)
+        public async Task UpdateAsync(int id, ParticipantToUpdateDTO entity)
         {
             var participant = await _context.Participants.FindAsync(id);
 
@@ -48,7 +81,7 @@ namespace QuizApi.Repositories
             {
                 throw new KeyNotFoundException();
             }
-
+    
             participant.Score = entity.Score;
             participant.TimeTaken = entity.TimeTaken;
 
