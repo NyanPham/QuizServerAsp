@@ -26,18 +26,19 @@ namespace QuizApi.Controllers
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
         {
             var random5Questions = await _context.Questions
-                                    .Select(x => new {
+                                    .Select(x => new
+                                    {
                                         Id = x.Id,
                                         QuestionInWords = x.QuestionInWords,
                                         ImageName = x.ImageName,
-                                        Options = new string[] { x.Option1, x.Option2, x.Option3, x.Option4}
+                                        Options = new string[] { x.Option1, x.Option2, x.Option3, x.Option4 }
                                     })
                                     .OrderBy(y => Guid.NewGuid())
                                     .Take(5)
                                     .ToListAsync();
             return Ok(random5Questions);
         }
-        
+
         // GET: api/Questions/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Question>> GetQuestion(int id)
@@ -92,6 +93,22 @@ namespace QuizApi.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetQuestion", new { id = question.Id }, question);
+        }
+
+        [HttpPost]
+        [Route("Answers")]
+        public async Task<ActionResult<Question>> RetrieveAnswers(int[] questionIds)
+        {
+            var answers = await _context.Questions.Where(x => questionIds.Contains(x.Id)).Select(x => new
+            {
+                Id = x.Id,
+                QuestionInWords = x.QuestionInWords,
+                ImageName = x.ImageName,
+                Options = new string[] { x.Option1, x.Option2, x.Option3, x.Option4 },
+                Answer = x.Answer
+            }).ToListAsync();
+
+            return Ok(answers);
         }
 
         // DELETE: api/Questions/5

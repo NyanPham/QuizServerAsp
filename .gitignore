@@ -5,3 +5,4 @@ obj/
 bin/
 bower_components/
 node_modules/
+appsettings.json
