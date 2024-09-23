@@ -9,10 +9,10 @@ namespace QuizApi.Models
         public int Id { get; set; }
 
         [Column(TypeName = "nvarchar(250)")]
-        public string QuestionInWords { get; set; } 
+        public string QuestionInWords { get; set; }
 
         [Column(TypeName = "nvarchar(250)")]
-        public string? ImageName { get; set; }   
+        public string? ImageName { get; set; }
 
         [Column(TypeName = "nvarchar(250)")]
         public string Option1 { get; set; }
@@ -25,7 +25,7 @@ namespace QuizApi.Models
 
         [Column(TypeName = "nvarchar(250)")]
         public string Option4 { get; set; }
-    
+
         public int Answer { get; set; }
     }
 }

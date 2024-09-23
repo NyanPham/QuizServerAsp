@@ -15,8 +15,8 @@ namespace QuizApi.Models
         public int TimeTaken { get; set; }
 
         [ForeignKey("IdentityUser")]
-        public string UserId { get; set; }
-        public IdentityUser User { get; set; }
+        public string? UserId { get; set; }
+        public IdentityUser? User { get; set; }
     }
 
     public class ParticipantResult
