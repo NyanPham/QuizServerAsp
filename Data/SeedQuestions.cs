@@ -20,7 +20,7 @@ namespace QuizApi.Data
                     new Question { QuestionInWords = "Which of the following is NOT operating system ?", Option1 = "Dos", Option2 = "Unix", Option3 = "Window NT", Option4 = "CSS", Answer = 3 },
                     new Question { QuestionInWords = "What is the full form of lP ?", Option1 = "Interface Program", Option2 = "Interface Protocol", Option3 = "Internet program", Option4 = "Internet Protocol", Answer = 3 }
                 );
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
     }
