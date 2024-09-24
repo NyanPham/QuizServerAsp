@@ -12,7 +12,6 @@ using QuizApi.DTOs;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
@@ -86,7 +85,7 @@ using (var scope = app.Services.CreateScope())
     await seedRoles.SeedAdmin();
     await seedRoles.SeedParticipant();
 
-    // Create a default admin user
+    // Create a default admin and participant
     var adminEmail = "admin@example.com";
     var adminPassword = "Admin@123";
     var participantEmail = "participant@example.com";

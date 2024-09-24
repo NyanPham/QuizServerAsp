@@ -1,19 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuizApi.DTOs
 {
     public class QuestionToUpdateDTO
     {
-        public string QuestionInWords { get; set; }
-        
+        [Required]
+        [StringLength(250)]
+        public string QuestionInWords { get; set; } = string.Empty;
+
+        [StringLength(250)]
         public string? ImageName { get; set; }
 
-        public string Option1 { get; set; }
-
-        public string Option2 { get; set; }
-
-        public string Option3 { get; set; }
-
-        public string Option4 { get; set; }
-
+        [Required]
+        [StringLength(250, MinimumLength = 1)]
+        public string[] Options { get; set; } = Array.Empty<string>();
+        
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Answer must be a valid option")]
         public int Answer { get; set; }
     }
 }

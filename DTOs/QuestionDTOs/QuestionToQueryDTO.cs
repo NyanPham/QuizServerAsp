@@ -1,21 +1,23 @@
-namespace QuizApi.DTOs
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuizApi.Models
 {
     public class QuestionToQueryDTO
     {
+        [Key]
         public int Id { get; set; }
 
-        public string QuestionInWords { get; set; }
+        [Column(TypeName = "nvarchar(250)")]
+        public string QuestionInWords { get; set; } = string.Empty;
 
+        [Column(TypeName = "nvarchar(250)")]
         public string? ImageName { get; set; }
 
-        public string Option1 { get; set; }
-
-        public string Option2 { get; set; }
-
-        public string Option3 { get; set; }
-
-        public string Option4 { get; set; }
-
+        [Column(TypeName = "nvarchar(250)[]")]
+        public string[] Options { get; set; } = Array.Empty<string>();
+        
         public int Answer { get; set; }
     }
 }
+

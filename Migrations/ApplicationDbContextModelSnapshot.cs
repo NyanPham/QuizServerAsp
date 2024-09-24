@@ -270,18 +270,9 @@ namespace QuizApi.Migrations
                     b.Property<string>("ImageName")
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<string>("Option1")
+                    b.Property<string>("Options")
                         .IsRequired()
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("Option2")
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("Option3")
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("Option4")
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(250)[]");
 
                     b.Property<string>("QuestionInWords")
                         .IsRequired()

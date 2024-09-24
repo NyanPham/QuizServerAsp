@@ -1,19 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuizApi.DTOs
 {
     public class QuestionToCreateDTO
     {
+        [Required]
+        [StringLength(250)]
         public string QuestionInWords { get; set; } = string.Empty;
 
+        [StringLength(250)]
         public string? ImageName { get; set; }
 
-        public string Option1 { get; set; } = string.Empty;
-
-        public string? Option2 { get; set; }
-
-        public string? Option3 { get; set; }
-
-        public string? Option4 { get; set; }
-
+        [Required]
+        public string[] Options { get; set; } = Array.Empty<string>();
+        
+        [Required]
         public int Answer { get; set; }
     }
 }

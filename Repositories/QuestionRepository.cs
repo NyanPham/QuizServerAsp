@@ -24,10 +24,7 @@ namespace QuizApi.Repositories
                 Id = q.Id,
                 QuestionInWords = q.QuestionInWords,
                 Answer = q.Answer,
-                Option1 = q.Option1,
-                Option2 = q.Option2,
-                Option3 = q.Option3,
-                Option4 = q.Option4,
+                Options = q.Options,
                 ImageName = q.ImageName
             });
         }
@@ -38,10 +35,7 @@ namespace QuizApi.Repositories
             {
                 QuestionInWords = entity.QuestionInWords,
                 Answer = entity.Answer,
-                Option1 = entity.Option1,
-                Option2 = entity.Option2,
-                Option3 = entity.Option3,
-                Option4 = entity.Option4,
+                Options = entity.Options,
                 ImageName = entity.ImageName
             };
 
@@ -53,10 +47,7 @@ namespace QuizApi.Repositories
                 Id = question.Id,
                 QuestionInWords = question.QuestionInWords,
                 Answer = question.Answer,
-                Option1 = question.Option1,
-                Option2 = question.Option2,
-                Option3 = question.Option3,
-                Option4 = question.Option4,
+                Options = question.Options,
                 ImageName = question.ImageName
             };
         }
@@ -75,10 +66,7 @@ namespace QuizApi.Repositories
                 Id = question.Id,
                 QuestionInWords = question.QuestionInWords,
                 Answer = question.Answer,
-                Option1 = question.Option1,
-                Option2 = question.Option2,
-                Option3 = question.Option3,
-                Option4 = question.Option4,
+                Options = question.Options,
                 ImageName = question.ImageName
             };
         }
@@ -91,13 +79,10 @@ namespace QuizApi.Repositories
             {
                 throw new KeyNotFoundException();
             }
-
+            
             question.QuestionInWords = entity.QuestionInWords;
             question.Answer = entity.Answer;
-            question.Option1 = entity.Option1;
-            question.Option2 = entity.Option2;
-            question.Option3 = entity.Option3;
-            question.Option4 = entity.Option4;
+            question.Options = entity.Options;
             question.ImageName = entity.ImageName;
 
             _context.Entry(question).State = EntityState.Modified;
