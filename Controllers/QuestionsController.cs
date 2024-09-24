@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuizApi.Data;
+using QuizApi.DTOs;
 using QuizApi.Models;
+using QuizApi.Repositories;
 
 namespace QuizApi.Controllers
 {
@@ -14,99 +15,83 @@ namespace QuizApi.Controllers
     [ApiController]
     public class QuestionsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly QuestionRepository _questionRepository;
 
-        public QuestionsController(ApplicationDbContext context)
+        public QuestionsController(QuestionRepository questionRepository)
         {
-            _context = context;
+            _questionRepository = questionRepository;
         }
 
         // GET: api/Questions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
+        public async Task<ActionResult<IEnumerable<QuestionToQueryDTO>>> GetQuestions()
         {
-            var random5Questions = await _context.Questions
-                                    .Select(x => new
-                                    {
-                                        Id = x.Id,
-                                        QuestionInWords = x.QuestionInWords,
-                                        ImageName = x.ImageName,
-                                        Options = new string[] { x.Option1, x.Option2, x.Option3, x.Option4 }
-                                    })
+            var random5Questions = (await _questionRepository.GetAllAsync())
                                     .OrderBy(y => Guid.NewGuid())
                                     .Take(5)
-                                    .ToListAsync();
+                                    .ToList();
             return Ok(random5Questions);
         }
 
         // GET: api/Questions/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Question>> GetQuestion(int id)
+        public async Task<ActionResult<QuestionToQueryDTO>> GetQuestion(int id)
         {
-            var question = await _context.Questions.FindAsync(id);
-
-            if (question == null)
+            try
+            {
+                var question = await _questionRepository.GetByIdAsync(id);
+                return Ok(question);
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            return question;
         }
 
         // PUT: api/Questions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutQuestion(int id, Question question)
+        public async Task<IActionResult> PutQuestion(int id, QuestionToUpdateDTO question)
         {
-            if (id != question.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(question).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _questionRepository.UpdateAsync(id, question);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (KeyNotFoundException)
             {
-                if (!QuestionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
-
-            return NoContent();
         }
 
         // POST: api/Questions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Question>> PostQuestion(Question question)
+        public async Task<ActionResult<QuestionToQueryDTO>> PostQuestion([FromForm] QuestionToCreateDTO question, [FromForm] IFormFile image)
         {
-            _context.Questions.Add(question);
-            await _context.SaveChangesAsync();
+            if (image != null && image.Length > 0)
+            {
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + image.FileName;
+                var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Images", uniqueFileName);
 
-            return CreatedAtAction("GetQuestion", new { id = question.Id }, question);
+                using (var stream = new FileStream(imagePath, FileMode.Create))
+                {
+                    await image.CopyToAsync(stream);
+                }
+
+                question.ImageName = uniqueFileName;
+            }
+
+            var createdQuestion = await _questionRepository.CreateAsync(question);
+            return CreatedAtAction("GetQuestion", new { id = createdQuestion.Id }, createdQuestion);
         }
 
+        // POST: api/Questions/Answers
         [HttpPost]
         [Route("Answers")]
-        public async Task<ActionResult<Question>> RetrieveAnswers(int[] questionIds)
+        public async Task<ActionResult<IEnumerable<QuestionToQueryDTO>>> RetrieveAnswers(int[] questionIds)
         {
-            var answers = await _context.Questions.Where(x => questionIds.Contains(x.Id)).Select(x => new
-            {
-                Id = x.Id,
-                QuestionInWords = x.QuestionInWords,
-                ImageName = x.ImageName,
-                Options = new string[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                Answer = x.Answer
-            }).ToListAsync();
+            var answers = (await _questionRepository.GetAllAsync())
+                            .Where(x => questionIds.Contains(x.Id))
+                            .ToList();
 
             return Ok(answers);
         }
@@ -115,21 +100,33 @@ namespace QuizApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuestion(int id)
         {
-            var question = await _context.Questions.FindAsync(id);
-            if (question == null)
+            try
+            {
+                await _questionRepository.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            _context.Questions.Remove(question);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool QuestionExists(int id)
+        [HttpPost("UploadImage")]
+        public async Task<IActionResult> UploadImage(IFormFile image)
         {
-            return _context.Questions.Any(e => e.Id == id);
+            if (image == null || image.Length == 0)
+            {
+                return BadRequest("No image uploaded.");
+            }
+
+            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Images", image.FileName);
+
+            using (var stream = new FileStream(imagePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
+
+            return Ok(new { ImageName = image.FileName });
         }
     }
 }

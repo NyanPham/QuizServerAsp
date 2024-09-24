@@ -102,6 +102,13 @@ public class AccountController : ControllerBase
         return Unauthorized();
     }
 
+    [HttpPost("Logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return Ok(new { Result = "User logged out successfully" });
+    }
+
     [HttpPost("ResetPassword")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPassword model)
     {

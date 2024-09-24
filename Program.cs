@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using QuizApi.Data;
+using QuizApi.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using QuizApi.Models;
+using QuizApi.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +44,10 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+// Register QuestionRepository
+builder.Services.AddScoped<QuestionRepository>();
+builder.Services.AddScoped<ParticipantRepository>();
 
 var app = builder.Build();
 
@@ -91,4 +98,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-

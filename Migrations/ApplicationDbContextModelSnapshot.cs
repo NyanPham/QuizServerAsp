@@ -247,7 +247,6 @@ namespace QuizApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -276,15 +275,12 @@ namespace QuizApi.Migrations
                         .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("Option2")
-                        .IsRequired()
                         .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("Option3")
-                        .IsRequired()
                         .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("Option4")
-                        .IsRequired()
                         .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("QuestionInWords")
@@ -351,9 +347,7 @@ namespace QuizApi.Migrations
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
