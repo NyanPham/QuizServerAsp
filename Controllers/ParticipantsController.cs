@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuizApi.Data;
-using QuizApi.Models;
+using QuizApi.DTOs;
+using QuizApi.Repositories;
 
 namespace QuizApi.Controllers
 {
@@ -14,113 +13,72 @@ namespace QuizApi.Controllers
     [ApiController]
     public class ParticipantsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ParticipantRepository _participantRepository;
 
-        public ParticipantsController(ApplicationDbContext context)
+        public ParticipantsController(ParticipantRepository participantRepository)
         {
-            _context = context;
+            _participantRepository = participantRepository;
         }
 
         // GET: api/Participants
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Participant>>> GetParticipants()
+        public async Task<ActionResult<IEnumerable<ParticipantToQueryDTO>>> GetParticipants()
         {
-            return await _context.Participants.ToListAsync();
+            var participants = await _participantRepository.GetAllAsync();
+            return Ok(participants);
         }
 
         // GET: api/Participants/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Participant>> GetParticipant(int id)
+        public async Task<ActionResult<ParticipantToQueryDTO>> GetParticipant(int id)
         {
-            var participant = await _context.Participants.FindAsync(id);
-
-            if (participant == null)
+            try
+            {
+                var participant = await _participantRepository.GetByIdAsync(id);
+                return Ok(participant);
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            return participant;
         }
 
         // PUT: api/Participants/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutParticipant(int id, ParticipantResult _participantResult)
+        public async Task<IActionResult> PutParticipant(int id, ParticipantToUpdateDTO participantToUpdateDTO)
         {
-            if (id != _participantResult.ParticipantId)
+            try
             {
-                return BadRequest();
+                await _participantRepository.UpdateAsync(id, participantToUpdateDTO);
+                return NoContent();
             }
-
-            Participant? participant = await _context.Participants.FindAsync(id);
-
-            if (participant == null)
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            participant.Score = _participantResult.Score;
-            participant.TimeTaken = _participantResult.TimeTaken;
-            _context.Entry(participant).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ParticipantExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
         }
 
         // POST: api/Participants
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Participant>> PostParticipant(Participant participant)
+        public async Task<ActionResult<ParticipantToQueryDTO>> PostParticipant(ParticipantToCreateDTO participantToCreateDTO)
         {
-            var temp = _context.Participants.Where(x => x.Name == participant.Name).FirstOrDefault();
-
-            if (temp == null)
-            {
-                _context.Participants.Add(participant);
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                participant = temp;
-            }
-
-            return Ok(participant);
+            var participant = await _participantRepository.CreateAsync(participantToCreateDTO);
+            return CreatedAtAction(nameof(GetParticipant), new { id = participant.Id }, participant);
         }
 
         // DELETE: api/Participants/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteParticipant(int id)
         {
-            var participant = await _context.Participants.FindAsync(id);
-            if (participant == null)
+            try
+            {
+                await _participantRepository.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            _context.Participants.Remove(participant);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ParticipantExists(int id)
-        {
-            return _context.Participants.Any(e => e.Id == id);
         }
     }
 }

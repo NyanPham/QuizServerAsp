@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace QuizApi.Migrations
 {
     /// <inheritdoc />
-    public partial class IdentityInitial : Migration
+    public partial class QuestionsAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -59,9 +59,9 @@ namespace QuizApi.Migrations
                     QuestionInWords = table.Column<string>(type: "nvarchar(250)", nullable: false),
                     ImageName = table.Column<string>(type: "nvarchar(250)", nullable: true),
                     Option1 = table.Column<string>(type: "nvarchar(250)", nullable: false),
-                    Option2 = table.Column<string>(type: "nvarchar(250)", nullable: false),
-                    Option3 = table.Column<string>(type: "nvarchar(250)", nullable: false),
-                    Option4 = table.Column<string>(type: "nvarchar(250)", nullable: false),
+                    Option2 = table.Column<string>(type: "nvarchar(250)", nullable: true),
+                    Option3 = table.Column<string>(type: "nvarchar(250)", nullable: true),
+                    Option4 = table.Column<string>(type: "nvarchar(250)", nullable: true),
                     Answer = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -185,7 +185,7 @@ namespace QuizApi.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Score = table.Column<int>(type: "int", nullable: false),
                     TimeTaken = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -194,8 +194,7 @@ namespace QuizApi.Migrations
                         name: "FK_Participants_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
