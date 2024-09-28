@@ -2,38 +2,28 @@ using Microsoft.AspNetCore.Identity;
 
 namespace QuizApi.Data
 {
-    public class SeedRoles
+    public static class SeedRoles
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<IdentityUser> _userManager;
-
-        public SeedRoles(IServiceProvider serviceProvider)
+        public static async Task SeedAdmin(IServiceProvider serviceProvider)
         {
-            _roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            _userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            await Seed(serviceProvider, Roles.Admin);
         }
 
-        public async Task SeedAdmin()
+        public static async Task SeedParticipant(IServiceProvider serviceProvider)
         {
-            await Seed(Roles.Admin);
+            await Seed(serviceProvider, Roles.Participant);
         }
 
-        public async Task SeedParticipant()
+        private static async Task Seed(IServiceProvider serviceProvider, Roles role)
         {
-            await Seed(Roles.Participant);
-        }
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        private async Task Seed(Roles role)
-        {
-            if (!await _roleManager.RoleExistsAsync(role.ToString()))
+            if (!await roleManager.RoleExistsAsync(role.ToString()))
             {
                 var newRole = new IdentityRole(role.ToString());
-                await _roleManager.CreateAsync(newRole);
+                await roleManager.CreateAsync(newRole);
             }
-
-            return;
         }
-
-
     }
 }

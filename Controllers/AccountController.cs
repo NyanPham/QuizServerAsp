@@ -8,6 +8,7 @@ using QuizApi.Data;
 using QuizApi.DTOs;
 using QuizApi.Helpers;
 using QuizApi.Models;
+using QuizApi.Repositories;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -15,15 +16,15 @@ public class AccountController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly IConfiguration _configuration;
     private readonly JwtServices _jwtServices;
+    private readonly ParticipantRepository _participantRepository;
 
-    public AccountController(IConfiguration configuration, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtServices jwtServices)
+    public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtServices jwtServices, ParticipantRepository participantRepository)
     {
-        _configuration = configuration;
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtServices = jwtServices;
+        _participantRepository = participantRepository;
     }
 
     [HttpPost("Register")]
@@ -51,12 +52,16 @@ public class AccountController : ControllerBase
             }
 
             // Create and save the Participant entity
-            var participant = new Participant
+            var participant = new ParticipantToCreateDTO
             {
                 Email = user.Email,
                 Name = user.UserName,
+                Score = 0,
+                TimeTaken = 0,
                 UserId = user.Id
             };
+
+            var registeredParticipant = await _participantRepository.CreateAsync(participant);
 
             var userInfo = new UserInfo
             {
@@ -65,7 +70,7 @@ public class AccountController : ControllerBase
                 Roles = roles
             };
 
-            return Ok(new { CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User registered and logged in successfully" });
+            return Ok(new { ParticipantId = registeredParticipant.Id, CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User registered and logged in successfully" });
         }
 
         return BadRequest(result.Errors);
@@ -98,7 +103,13 @@ public class AccountController : ControllerBase
                 Roles = roles
             };
 
-            return Ok(new { CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User logged in successfully" });
+            var participant = new ParticipantToQueryDTO { Id = 0 };
+            if (roles.Contains(Roles.Participant.ToString()))
+            {
+                participant = await _participantRepository.GetByUserIdAsync(user.Id);
+            }
+
+            return Ok(new { ParticipantId = participant.Id, CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User logged in successfully" });
         }
 
         return Unauthorized();
