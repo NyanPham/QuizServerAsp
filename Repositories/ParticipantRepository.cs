@@ -43,7 +43,28 @@ namespace QuizApi.Repositories
             await _context.Participants.AddAsync(participant);
             await _context.SaveChangesAsync();
 
-            return new ParticipantToQueryDTO {
+            return new ParticipantToQueryDTO
+            {
+                Id = participant.Id,
+                Name = participant.Name,
+                Email = participant.Email,
+                Score = participant.Score,
+                TimeTaken = participant.TimeTaken,
+                User = participant.User
+            };
+        }
+
+        public async Task<ParticipantToQueryDTO> GetByUserIdAsync(string userId)
+        {
+            var participant = await _context.Participants.FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (participant == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            return new ParticipantToQueryDTO
+            {
                 Id = participant.Id,
                 Name = participant.Name,
                 Email = participant.Email,
@@ -54,7 +75,7 @@ namespace QuizApi.Repositories
         }
 
         public async Task<ParticipantToQueryDTO> GetByIdAsync(int id)
-        {       
+        {
             var participant = await _context.Participants.FindAsync(id);
 
             if (participant == null)
@@ -81,7 +102,7 @@ namespace QuizApi.Repositories
             {
                 throw new KeyNotFoundException();
             }
-    
+
             participant.Score = entity.Score;
             participant.TimeTaken = entity.TimeTaken;
 

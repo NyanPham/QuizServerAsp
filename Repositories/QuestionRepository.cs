@@ -35,7 +35,7 @@ namespace QuizApi.Repositories
             {
                 QuestionInWords = entity.QuestionInWords,
                 Answer = entity.Answer,
-                Options = entity.Options,
+                Options = entity.OptionsArr,
                 ImageName = entity.ImageName
             };
 
@@ -79,7 +79,7 @@ namespace QuizApi.Repositories
             {
                 throw new KeyNotFoundException();
             }
-            
+
             question.QuestionInWords = entity.QuestionInWords;
             question.Answer = entity.Answer;
             question.Options = entity.Options;

@@ -1,13 +1,12 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
-using QuizApi.Data;
-using QuizApi.Repositories;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using QuizApi.Models;
-using QuizApi.DTOs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using QuizApi.Data;
+using QuizApi.Helpers;
+using QuizApi.Repositories;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,15 +30,16 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidateAudience = true,
+        ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        // ValidAudience = builder.Configuration["Jwt:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
 
+builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -47,8 +47,16 @@ builder.Services.AddControllers();
 // Register QuestionRepository
 builder.Services.AddScoped<QuestionRepository>();
 builder.Services.AddScoped<ParticipantRepository>();
+builder.Services.AddSingleton<JwtServices>();
 
 var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors(options =>
 {
@@ -63,13 +71,6 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -80,20 +81,19 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await SeedQuestions.Seed(context);
 
-    var seedRoles = new SeedRoles(scope.ServiceProvider);
+    await SeedRoles.SeedAdmin(scope.ServiceProvider);
+    await SeedRoles.SeedParticipant(scope.ServiceProvider);
 
-    await seedRoles.SeedAdmin();
-    await seedRoles.SeedParticipant();
-
-    // Create a default admin and participant
+    // Create a default admin user
     var adminEmail = "admin@example.com";
     var adminPassword = "Admin@123";
     var participantEmail = "participant@example.com";
     var participantPassword = "Participant@123";
 
-    var seedUsers = new SeedUsers(scope.ServiceProvider);
-    await seedUsers.Seed(adminEmail, adminPassword, Roles.Admin);
-    await seedUsers.Seed(participantEmail, participantPassword, Roles.Participant);
+    await SeedUsers.Seed(scope.ServiceProvider, adminEmail, adminPassword, Roles.Admin);
+    await SeedUsers.Seed(scope.ServiceProvider, participantEmail, participantPassword, Roles.Participant);
+
+    await SeedUsers.SeedParticipant(scope.ServiceProvider, participantEmail);
 }
 
 app.Run();

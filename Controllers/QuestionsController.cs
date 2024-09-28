@@ -65,20 +65,25 @@ namespace QuizApi.Controllers
 
         // POST: api/Questions
         [HttpPost]
-        public async Task<ActionResult<QuestionToQueryDTO>> PostQuestion([FromForm] QuestionToCreateDTO question, [FromForm] IFormFile image)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<QuestionToQueryDTO>> PostQuestion([FromForm] QuestionToCreateDTO question)
         {
-            if (image != null && image.Length > 0)
+            // Console.WriteLine(Request.Headers["Authorization"]);
+
+            if (question.image != null && question.image.Length > 0)
             {
-                var uniqueFileName = Guid.NewGuid().ToString() + "_" + image.FileName;
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + question.image.FileName;
                 var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Images", uniqueFileName);
 
                 using (var stream = new FileStream(imagePath, FileMode.Create))
                 {
-                    await image.CopyToAsync(stream);
+                    await question.image.CopyToAsync(stream);
                 }
 
                 question.ImageName = uniqueFileName;
             }
+
+            question.OptionsArr = question.Options.Split("**OPTION_DELIMITER**");
 
             var createdQuestion = await _questionRepository.CreateAsync(question);
             return CreatedAtAction("GetQuestion", new { id = createdQuestion.Id }, createdQuestion);

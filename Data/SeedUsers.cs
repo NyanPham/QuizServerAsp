@@ -1,44 +1,62 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using QuizApi.Models;
 
 namespace QuizApi.Data
 {
-    public class SeedUsers
+    public static class SeedUsers
     {
-        private RoleManager<IdentityRole> _roleManager;
-        private UserManager<IdentityUser> _userManager;
-
-        public SeedUsers(IServiceProvider serviceProvider)
+        public static async Task<IActionResult> Seed(IServiceProvider serviceProvider, string email, string password, Roles role)
         {
-            _roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            _userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
-        }
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        public async Task<IActionResult> Seed(string Email, string Password, Roles role)
-        {
-            var user = await _userManager.FindByEmailAsync(Email);
-            var roleExists = await _roleManager.RoleExistsAsync(role.ToString());
+            var user = await userManager.FindByEmailAsync(email);
+            var roleExists = await roleManager.RoleExistsAsync(role.ToString());
 
             if (user == null && roleExists)
             {
                 user = new IdentityUser
                 {
-                    UserName = Email,
-                    Email = Email
+                    UserName = email,
+                    Email = email
                 };
 
-                var result = await _userManager.CreateAsync(user, Password);
+                var result = await userManager.CreateAsync(user, password);
 
                 if (!result.Succeeded)
                 {
                     return new BadRequestObjectResult(result.Errors);
                 }
 
-
-                await _userManager.AddToRoleAsync(user, role.ToString());
+                await userManager.AddToRoleAsync(user, role.ToString());
             }
 
             return new OkResult();
+        }
+
+        public static async Task SeedParticipant(IServiceProvider serviceProvider, string email)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user != null)
+            {
+                var participant = new Participant
+                {
+                    Email = email,
+                    Name = "Default Participant",
+                    Score = 0,
+                    TimeTaken = 0,
+                    UserId = user.Id
+                };
+
+                context.Participants.Add(participant);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

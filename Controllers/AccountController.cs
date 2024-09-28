@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using QuizApi.Data;
 using QuizApi.DTOs;
+using QuizApi.Helpers;
 using QuizApi.Models;
+using QuizApi.Repositories;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -14,13 +16,15 @@ public class AccountController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly IConfiguration _configuration;
+    private readonly JwtServices _jwtServices;
+    private readonly ParticipantRepository _participantRepository;
 
-    public AccountController(IConfiguration configuration, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+    public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtServices jwtServices, ParticipantRepository participantRepository)
     {
-        _configuration = configuration;
         _userManager = userManager;
         _signInManager = signInManager;
+        _jwtServices = jwtServices;
+        _participantRepository = participantRepository;
     }
 
     [HttpPost("Register")]
@@ -48,21 +52,25 @@ public class AccountController : ControllerBase
             }
 
             // Create and save the Participant entity
-            var participant = new Participant
+            var participant = new ParticipantToCreateDTO
             {
                 Email = user.Email,
                 Name = user.UserName,
+                Score = 0,
+                TimeTaken = 0,
                 UserId = user.Id
             };
+
+            var registeredParticipant = await _participantRepository.CreateAsync(participant);
 
             var userInfo = new UserInfo
             {
                 Email = user.Email,
                 Username = user.UserName,
-                Role = role
+                Roles = roles
             };
 
-            return Ok(new { CurrentUser = userInfo, Token = GenerateToken(user.Email, role), Result = "User registered and logged in successfully" });
+            return Ok(new { ParticipantId = registeredParticipant.Id, CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User registered and logged in successfully" });
         }
 
         return BadRequest(result.Errors);
@@ -82,9 +90,8 @@ public class AccountController : ControllerBase
             }
 
             var roles = await _userManager.GetRolesAsync(user);
-            var role = roles.FirstOrDefault();
 
-            if (roles.Count == 0 || role == null)
+            if (roles.Count == 0)
             {
                 return Unauthorized();
             }
@@ -93,10 +100,16 @@ public class AccountController : ControllerBase
             {
                 Email = user.Email,
                 Username = user.UserName,
-                Role = role
+                Roles = roles
             };
 
-            return Ok(new { CurrentUser = userInfo, Token = GenerateToken(model.Email, role), Result = "User logged in successfully" });
+            var participant = new ParticipantToQueryDTO { Id = 0 };
+            if (roles.Contains(Roles.Participant.ToString()))
+            {
+                participant = await _participantRepository.GetByUserIdAsync(user.Id);
+            }
+
+            return Ok(new { ParticipantId = participant.Id, CurrentUser = userInfo, Token = _jwtServices.GenerateToken(user, roles), Result = "User logged in successfully" });
         }
 
         return Unauthorized();
@@ -126,29 +139,5 @@ public class AccountController : ControllerBase
         }
 
         return BadRequest(resetPassResult.Errors);
-    }
-
-    private string GetSecretKey()
-    {
-        var secretKey = _configuration["Jwt:Key"];
-        return secretKey!;
-    }
-
-    private string GenerateToken(string email, string role)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(GetSecretKey());
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new Claim[]
-            {
-                new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Role, role)
-            }),
-            Expires = DateTime.UtcNow.AddDays(7),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 }
